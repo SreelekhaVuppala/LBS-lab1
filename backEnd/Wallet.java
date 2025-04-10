@@ -2,12 +2,21 @@ package backEnd;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+
+
+
 
 public class Wallet {
     /**
      * The RandomAccessFile of the wallet file
      */  
     private RandomAccessFile file;
+
+
+     private FileChannel channel;
+    
 
     /**
      * Creates a Wallet object
@@ -16,6 +25,8 @@ public class Wallet {
      */
     public Wallet () throws Exception {
 	this.file = new RandomAccessFile(new File("backEnd/wallet.txt"), "rw");
+    this.channel = this.file.getChannel();
+    
     }
 
     /**
@@ -24,8 +35,9 @@ public class Wallet {
      * @return                   The content of the wallet file as an integer
      */
     public int getBalance() throws IOException {
-	this.file.seek(0);
-	return Integer.parseInt(this.file.readLine());
+        
+    this.file.seek(0);
+    return Integer.parseInt(this.file.readLine());
     }
 
     /**
@@ -47,17 +59,28 @@ public class Wallet {
      * @return true if the withdrawal was successful, false if there were insufficient funds.
      */
     public synchronized boolean safeWithdraw(int valueToWithdraw) throws Exception {
-        int currentBalance = getBalance();
-
-        // Check if the balance is enough for the withdrawal
-        if (currentBalance >= valueToWithdraw) {
-            // Deduct the amount from the balance
-            int newBalance = currentBalance - valueToWithdraw;
-            setBalance(newBalance);
-            return true;
-        } else {
-            // Insufficient funds, return false
-            return false;
+        FileLock lock = null;
+        try{
+            lock = channel.lock();
+            //read current balance
+           int currentBalance = getBalance();
+        
+            // Check if the balance is enough for the withdrawal
+            if (currentBalance >= valueToWithdraw) {
+                // Deduct the amount from the balance
+                int newBalance = currentBalance - valueToWithdraw;
+                setBalance(newBalance);
+                return true;
+            } else {
+                // Insufficient funds, return false
+                return false;
+            }
+        }
+        finally{
+            if(lock != null && lock.isValid())
+            {
+            lock.release();
+            }
         }
     }
 
@@ -65,6 +88,10 @@ public class Wallet {
      * Closes the RandomAccessFile in this.file
      */
     public void close() throws Exception {
-	this.file.close();
+        if(this.channel.isOpen())
+        {
+            this.channel.close();
+        }    
+	    this.file.close();
     }
 }

@@ -52,7 +52,7 @@ public class ShoppingCart {
             if (price == -1) {
                 System.out.println("Invalid product.");
             } else {
-                Thread.sleep(5000);// for presentation purpose dleay is added.
+                Thread.sleep(5000);// for presentation purpose delay is added.
                 // Use safeWithdraw instead of withdraw
                 boolean success = wallet.safeWithdraw(price);
                 
