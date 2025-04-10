@@ -58,7 +58,7 @@ public class Wallet {
      * @param valueToWithdraw The amount to withdraw.
      * @return true if the withdrawal was successful, false if there were insufficient funds.
      */
-    public synchronized boolean safeWithdraw(int valueToWithdraw) throws Exception {
+    public  boolean safeWithdraw(int valueToWithdraw) throws Exception {
         FileLock lock = null;
         try{
             lock = channel.lock();
